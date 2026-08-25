@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B2545" />
+  <title>Drug Substance COGS · Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230B2545'/%3E%3Cpath d='M11 20 L21 12' stroke='%232E7D5B' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --navy: #0B2545;
+      --navy-2: #13315C;
+      --green: #2E7D5B;
+      --green-d: #0B3D2E;
+      --green-l: #4CA57B;
+      --gold: #D4A946;
+      --cream: #F5F1E6;
+      --ink: #0E1116;
+      --muted: #6B7280;
+      --line: #E5E7EB;
+      --bg: #FAFAF7;
+      --card: #FFFFFF;
+      --radius: 14px;
+      --shadow: 0 1px 2px rgba(11,37,69,.04), 0 8px 24px rgba(11,37,69,.06);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 20px 18px 40px; }
+
+    /* Header */
+    header { margin-bottom: 18px; }
+    .kicker {
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 6px;
+    }
+    h1 {
+      font-size: 22px; line-height: 1.2; margin: 0; font-weight: 700;
+      color: var(--navy); letter-spacing: -0.01em;
+    }
+    .subtitle { font-size: 14px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+
+    /* Result card */
+    .result {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      margin: 18px 0 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .result::before {
+      content: '';
+      position: absolute; right: -40px; top: -40px;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(46,125,91,.35) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .result-label {
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(255,255,255,.65); font-weight: 600; margin: 0 0 4px;
+    }
+    .result-value {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 48px; line-height: 1.05; font-weight: 700;
+      color: white; margin: 0;
+      display: flex; align-items: baseline; gap: 6px;
+      flex-wrap: wrap;
+    }
+    .result-value .unit {
+      font-size: 18px; color: var(--green-l); font-weight: 500;
+    }
+    .result-sub {
+      font-size: 13px; color: rgba(255,255,255,.7); margin: 8px 0 0;
+      line-height: 1.5;
+    }
+    .result-sub strong { color: var(--gold); font-weight: 600; }
+
+    /* Inputs */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+    .field { margin-bottom: 20px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 8px; gap: 12px;
+    }
+    .field-label {
+      font-size: 14px; font-weight: 600; color: var(--ink);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .field-hint { font-size: 11px; color: var(--muted); font-weight: 400; margin-top: 2px; letter-spacing: 0; text-transform: none; }
+    .value-pill {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 15px; font-weight: 700; color: var(--navy);
+      background: var(--cream);
+      padding: 4px 10px; border-radius: 8px;
+      min-width: 92px; text-align: right;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; flex-shrink: 0;
+    }
+    .dot.cost { background: var(--navy); }
+    .dot.raw { background: var(--green); }
+    .dot.scrap { background: var(--gold); }
+    .dot.yield { background: var(--green-l); }
+
+    input[type="range"] {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 6px;
+      background: var(--line);
+      border-radius: 999px; outline: none;
+      margin: 6px 0 0;
+      touch-action: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: white; border: 3px solid var(--green);
+      cursor: pointer; box-shadow: 0 2px 6px rgba(11,37,69,.15);
+      transition: transform .12s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.12); }
+    input[type="range"]::-moz-range-thumb {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: white; border: 3px solid var(--green);
+      cursor: pointer; box-shadow: 0 2px 6px rgba(11,37,69,.15);
+    }
+
+    /* Breakdown bar */
+    .breakdown-card { padding: 18px; }
+    .breakdown-title {
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin: 0 0 10px;
+    }
+    .stack {
+      display: flex; height: 14px; border-radius: 999px;
+      overflow: hidden; background: var(--line);
+      margin-bottom: 10px;
+    }
+    .stack > span { height: 100%; transition: flex-basis .3s ease; }
+    .stack .seg-cost { background: var(--navy); }
+    .stack .seg-raw { background: var(--green); }
+    .stack .seg-scrap { background: var(--gold); }
+    .legend {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+      font-size: 12px; color: var(--muted);
+    }
+    .legend .row { display: flex; align-items: center; gap: 6px; }
+    .legend .row strong { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-weight: 700; margin-left: auto; }
+
+    /* Sensitivity */
+    .sensitivity {
+      background: var(--cream);
+      border-left: 3px solid var(--gold);
+      padding: 12px 14px;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--ink);
+      margin-top: 14px;
+    }
+    .sensitivity strong { color: var(--navy); }
+    .sensitivity .num { font-family: 'JetBrains Mono', monospace; color: var(--green-d); font-weight: 700; }
+
+    /* Actions */
+    .actions {
+      display: flex; gap: 8px; margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    button.reset {
+      background: white; color: var(--navy); border: 1px solid var(--line);
+      padding: 10px 16px; border-radius: 10px; font-family: inherit;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .12s ease;
+    }
+    button.reset:hover, button.reset:focus-visible {
+      background: var(--cream); border-color: var(--navy); outline: none;
+    }
+    button.reset:active { transform: scale(0.98); }
+
+    footer {
+      text-align: center; font-size: 11px; color: var(--muted);
+      margin-top: 28px; letter-spacing: 0.02em;
+    }
+    footer strong { color: var(--navy); font-weight: 600; }
+
+    /* Small tablet+ */
+    @media (min-width: 640px) {
+      .wrap { padding: 32px 24px 60px; }
+      h1 { font-size: 26px; }
+      .result { padding: 26px 24px; }
+      .result-value { font-size: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="kicker">Drug substance · illustrative</p>
+      <h1>Cost of goods calculator</h1>
+      <p class="subtitle">Move the sliders to see how batch price, raw materials, scrap and yield combine into a single number: cost per gram of drug substance.</p>
+    </header>
+
+    <!-- Result -->
+    <section class="result" aria-live="polite">
+      <p class="result-label">Cost per gram</p>
+      <p class="result-value"><span id="unitCost">—</span><span class="unit">$/g</span></p>
+      <p class="result-sub">
+        Total cost per batch: <strong id="totalCost">—</strong> · Yield: <strong id="yieldOut">—</strong>
+      </p>
+    </section>
+
+    <!-- Inputs -->
+    <div class="card" role="group" aria-label="Inputs">
+      <div class="field">
+        <div class="field-header">
+          <div>
+            <div class="field-label"><span class="dot cost"></span>Batch price</div>
+            <div class="field-hint">What the CMO charges to run one batch</div>
+          </div>
+          <div class="value-pill" id="batchVal">$500,000</div>
+        </div>
+        <input type="range" id="batch" min="100000" max="15000000" step="50000" value="500000" aria-label="Batch price in dollars">
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <div>
+            <div class="field-label"><span class="dot raw"></span>Raw materials</div>
+            <div class="field-hint">Media, buffers, resins, consumables per batch</div>
+          </div>
+          <div class="value-pill" id="rawVal">$120,000</div>
+        </div>
+        <input type="range" id="raw" min="0" max="5000000" step="20000" value="120000" aria-label="Raw materials cost in dollars">
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <div>
+            <div class="field-label"><span class="dot scrap"></span>Scrap cost</div>
+            <div class="field-hint">Value written off due to failed material</div>
+          </div>
+          <div class="value-pill" id="scrapVal">$30,000</div>
+        </div>
+        <input type="range" id="scrap" min="0" max="500000" step="2500" value="30000" aria-label="Scrap cost in dollars">
+      </div>
+
+      <div class="field">
+        <div class="field-header">
+          <div>
+            <div class="field-label"><span class="dot yield"></span>Yield per batch</div>
+            <div class="field-hint">Kilograms of drug substance obtained</div>
+          </div>
+          <div class="value-pill" id="yieldVal">1.5 kg</div>
+        </div>
+        <input type="range" id="yield" min="0.1" max="100" step="0.1" value="1.5" aria-label="Yield in kilograms per batch">
+      </div>
+    </div>
+
+    <!-- Breakdown -->
+    <div class="card breakdown-card">
+      <p class="breakdown-title">Cost breakdown</p>
+      <div class="stack" role="img" aria-label="Contribution of each cost component to total batch cost">
+        <span class="seg-cost" id="segCost" style="flex-basis: 77%"></span>
+        <span class="seg-raw"  id="segRaw"  style="flex-basis: 18%"></span>
+        <span class="seg-scrap" id="segScrap" style="flex-basis: 5%"></span>
+      </div>
+      <div class="legend">
+        <div class="row"><span class="dot cost"></span> Batch <strong id="pctCost">77%</strong></div>
+        <div class="row"><span class="dot raw"></span> Raw mat. <strong id="pctRaw">18%</strong></div>
+        <div class="row"><span class="dot scrap"></span> Scrap <strong id="pctScrap">5%</strong></div>
+      </div>
+
+      <div class="sensitivity" id="sensitivity">
+        If yield <strong>drops 20%</strong>, cost per gram rises to <span class="num" id="sensValue">$542/g</span> (<span class="num" id="sensDelta">+25%</span>).
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="reset" id="resetBtn" type="button">Reset to defaults</button>
+    </div>
+
+    <footer>
+      <strong>argenx</strong> · illustrative example · no confidential data
+    </footer>
+  </div>
+
+  <script>
+    const DEFAULTS = { batch: 500000, raw: 120000, scrap: 30000, yield: 1.5 };
+
+    const els = {
+      batch: document.getElementById('batch'),
+      raw: document.getElementById('raw'),
+      scrap: document.getElementById('scrap'),
+      yield: document.getElementById('yield'),
+      batchVal: document.getElementById('batchVal'),
+      rawVal: document.getElementById('rawVal'),
+      scrapVal: document.getElementById('scrapVal'),
+      yieldVal: document.getElementById('yieldVal'),
+      unitCost: document.getElementById('unitCost'),
+      totalCost: document.getElementById('totalCost'),
+      yieldOut: document.getElementById('yieldOut'),
+      segCost: document.getElementById('segCost'),
+      segRaw: document.getElementById('segRaw'),
+      segScrap: document.getElementById('segScrap'),
+      pctCost: document.getElementById('pctCost'),
+      pctRaw: document.getElementById('pctRaw'),
+      pctScrap: document.getElementById('pctScrap'),
+      sensValue: document.getElementById('sensValue'),
+      sensDelta: document.getElementById('sensDelta'),
+      resetBtn: document.getElementById('resetBtn'),
+    };
+
+    const usd = (n) => '$' + Math.round(n).toLocaleString('en-US');
+    const usdShort = (n) => {
+      if (n >= 1_000_000) return '$' + (n / 1_000_000).toFixed(n < 10_000_000 ? 2 : 1) + 'M';
+      if (n >= 10_000) return '$' + (n / 1000).toFixed(0) + 'k';
+      return usd(n);
+    };
+    const kilos = (n) => (n >= 10 ? n.toFixed(1) : n.toFixed(2)) + ' kg';
+
+    function update() {
+      const batch = +els.batch.value;
+      const raw   = +els.raw.value;
+      const scrap = +els.scrap.value;
+      const yKg   = +els.yield.value;
+      const yG    = yKg * 1000;
+      const total = batch + raw + scrap;
+      const unit  = yG > 0 ? total / yG : 0;
+
+      els.batchVal.textContent = usd(batch);
+      els.rawVal.textContent   = usd(raw);
+      els.scrapVal.textContent = usd(scrap);
+      els.yieldVal.textContent = kilos(yKg);
+
+      els.unitCost.textContent = '$' + (unit >= 100
+        ? Math.round(unit).toLocaleString('en-US')
+        : unit.toFixed(unit >= 10 ? 1 : 2));
+      els.totalCost.textContent = usdShort(total);
+      els.yieldOut.textContent  = kilos(yKg);
+
+      const pCost  = total ? (batch / total) * 100 : 0;
+      const pRaw   = total ? (raw   / total) * 100 : 0;
+      const pScrap = total ? (scrap / total) * 100 : 0;
+      els.segCost.style.flexBasis  = pCost  + '%';
+      els.segRaw.style.flexBasis   = pRaw   + '%';
+      els.segScrap.style.flexBasis = pScrap + '%';
+      els.pctCost.textContent  = Math.round(pCost)  + '%';
+      els.pctRaw.textContent   = Math.round(pRaw)   + '%';
+      els.pctScrap.textContent = Math.round(pScrap) + '%';
+
+      // Sensitivity: yield drops 20%
+      const yLo = yG * 0.8;
+      const unitLo = yLo > 0 ? total / yLo : 0;
+      const delta = unit > 0 ? (unitLo / unit - 1) * 100 : 0;
+      els.sensValue.textContent = '$' + (unitLo >= 100
+        ? Math.round(unitLo).toLocaleString('en-US')
+        : unitLo.toFixed(unitLo >= 10 ? 1 : 2)) + '/g';
+      els.sensDelta.textContent = '+' + Math.round(delta) + '%';
+    }
+
+    ['batch','raw','scrap','yield'].forEach(k => {
+      els[k].addEventListener('input', update);
+    });
+    els.resetBtn.addEventListener('click', () => {
+      Object.keys(DEFAULTS).forEach(k => els[k].value = DEFAULTS[k]);
+      update();
+    });
+
+    update();
+  </script>
+</body>
+</html>
